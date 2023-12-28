@@ -14,11 +14,12 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+# for tiny imagenet 200
 def create_val_img_folder(args):
     '''
     This method is responsible for separating validation images into separate sub folders
     '''
-    dataset_dir = os.path.join('/data', 'tiny-imagenet-200')
+    dataset_dir = os.path.join(args.data_path, 'tiny-imagenet-200')
     val_dir = os.path.join(dataset_dir, 'val')
     img_dir = os.path.join(val_dir, 'images')
 

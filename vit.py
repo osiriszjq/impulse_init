@@ -22,6 +22,8 @@ def posemb_sincos_2d(h, w, dim, temperature: int = 10000, dtype = torch.float32)
     pe = torch.cat((x.sin(), x.cos(), y.sin(), y.cos()), dim=1)
     return pe.type(dtype)
 
+
+# my impulse initilization function
 def impulse_init(heads,img_size,att_rank,ff,scale=1.0,spatial_pe=None,norm=1):
     weight = torch.zeros((heads,img_size**2,img_size**2))
     k = torch.randint(0,ff**2,(heads,))

@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 import time
 import argparse
 from util import *
-from vit import *
+from convmixer import *
 
 
 parser = argparse.ArgumentParser()
@@ -31,23 +31,21 @@ parser.add_argument('--data_aug', action='store_true')
 parser.add_argument('--noamp', action='store_true', help='disable mixed precision training. for older pytorch versions')
 
 parser.add_argument('--dim', default=512, type=int)
-parser.add_argument('--heads', default=8, type=int)
+parser.add_argument('--heads', default=0, type=int, help='number of different filters in one layer')
 parser.add_argument('--depth', default=6, type=int)
 parser.add_argument('--psize', default=2, type=int)
-parser.add_argument('--mlp_dim', default=512, type=int)
-parser.add_argument('--dim_head', default=64, type=int)
+parser.add_argument('--conv-ks', default=5, type=int)
 
-parser.add_argument('--input_pe', action='store_true', help='use pe at input')
-parser.add_argument("--init", type=str, default="none")
-parser.add_argument("--pe_choice", type=str, default="sin")
-parser.add_argument('--use_value', action='store_true', help='use value')
-parser.add_argument("--spatial_pe", action='store_true', help='use pe for spatial mixing')
-parser.add_argument("--spatial_x", action='store_true', help='use x for spatial mixing')
-parser.add_argument('--alpha', default=0.5, type=float, help='balance pe and x')
-parser.add_argument("--trainable", action='store_true', help='let spatial mixing to be trainable')
+parser.add_argument('--fix_spatial', action='store_true', help='freeze spatial mixing')
+parser.add_argument("--init", type=str, default="random")
+parser.add_argument('--input_weight', action='store_true', help='share weights in different layers')
+parser.add_argument("--linear_format", action='store_true', help='use linear format conv filters')
+parser.add_argument("--no_spatial_bias", action='store_true', help='disable bias for spatial conv')
 
 
 args = parser.parse_args()
+args.spatial = not args.fix_spatial
+args.spatial_bias = not args.no_spatial_bias
 use_amp = not args.noamp
 print(args)
 
@@ -56,71 +54,51 @@ usewandb = not args.nowandb
 if usewandb:
     import wandb
     watermark = "{}_h{}".format(args.init,args.heads)
-    wandb.init(project=f'vit-{args.dataset}', name=watermark)
+    wandb.init(project=f'convmixer-{args.dataset}',name=watermark)
     wandb.config.update(args)
 
 
+
 print(f'==> Preparing {args.dataset} data..')
-if args.dataset[:5] == 'cifar':
-    image_size = 32
-    dataset_mean = (0.4914, 0.4822, 0.4465)
-    dataset_std = (0.2471, 0.2435, 0.2616)
-elif args.dataset == 'svhn':
-    image_size = 32
-    dataset_mean = (0.4376821, 0.4437697, 0.47280442)
-    dataset_std = (0.19803012, 0.20101562, 0.19703614)
-elif args.dataset == 'tiny_imagenet':
-    image_size = 64
-    args.psize = 4
-    print(args)
-    dataset_mean = (0.485, 0.456, 0.406)
-    dataset_std = (0.229, 0.224, 0.225)
-else:
-    print('no available dataset')
+dataset_mean = (0.4914, 0.4822, 0.4465)
+dataset_std = (0.2471, 0.2435, 0.2616)
 if args.data_aug:
     train_transform = transforms.Compose([
         transforms.RandAugment(2, 14),
+        transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomResizedCrop(image_size),
         transforms.ToTensor(),
         transforms.Normalize(dataset_mean, dataset_std)
     ])
 else:
     train_transform = transforms.Compose([
-        transforms.Resize(image_size),
         transforms.ToTensor(),
         transforms.Normalize(dataset_mean, dataset_std)
     ])
 
 test_transform = transforms.Compose([
-    transforms.Resize(image_size),
     transforms.ToTensor(),
     transforms.Normalize(dataset_mean, dataset_std)
 ])
 if args.dataset == 'cifar10':
     n_class = 10
+    image_size = 32
     trainset = torchvision.datasets.CIFAR10(root=args.data_path, train=True, download=True, transform=train_transform)
     testset = torchvision.datasets.CIFAR10(root=args.data_path, train=False, download=True, transform=test_transform)
 elif args.dataset == 'cifar100':
     n_class = 100
+    image_size = 32
     trainset = torchvision.datasets.CIFAR100(root=args.data_path, train=True, download=True, transform=train_transform)
     testset = torchvision.datasets.CIFAR100(root=args.data_path, train=False, download=True, transform=test_transform)
-elif args.dataset == 'svhn':
-    n_class = 10
-    trainset = torchvision.datasets.SVHN(root=args.data_path, split='train', download=True, transform=train_transform)
-    testset = torchvision.datasets.SVHN(root=args.data_path, split='test', download=True, transform=test_transform)
-elif args.dataset == 'tiny_imagenet':
-    trainset = torchvision.datasets.ImageFolder(root=args.data_path+'/tiny-imagenet-200/train', transform=train_transform)
-    testset = torchvision.datasets.ImageFolder(root=args.data_path+'/tiny-imagenet-200/val/images', transform=test_transform)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers, pin_memory=True)
-testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers)
+testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
 
 
 
 print('==> Building model..')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = SimpleViT(image_size=image_size, patch_size=args.psize, num_classes=n_class, dim=args.dim, depth=args.depth, heads=args.heads, mlp_dim=args.mlp_dim, dim_head=args.dim_head,
-                input_pe=args.input_pe, pe_choice=args.pe_choice, use_value=args.use_value, spatial_pe=args.spatial_pe, spatial_x=args.spatial_x, init=args.init, alpha=args.alpha, trainable=args.trainable)
+model = ConvMixer(args.dim, args.depth, patch_size=args.psize, kernel_size=args.conv_ks, n_classes=n_class, image_size=image_size, return_embedding=False,
+                  init=args.init, heads=args.heads, spatial=args.spatial, spatial_bias=args.spatial_bias, input_weight=args.input_weight,linear_format=args.linear_format)
 if 'cuda' in device:
     print(device)
     print("using data parallel")
@@ -141,9 +119,11 @@ num_param = count_parameters(model)
 for epoch in range(args.epochs):
     start = time.time()
     train_loss, train_acc, n = 0, 0, 0
+    n_batch = 0
     for i, (X, y) in enumerate(trainloader):
         model.train()
         X, y = X.cuda(), y.cuda()
+        
         with torch.cuda.amp.autocast(enabled=use_amp):
             output = model(X)
             loss = criterion(output, y)
@@ -176,4 +156,4 @@ for epoch in range(args.epochs):
         "epoch_time": time.time()-start, 'num_param':num_param})
     else:
         print(f'epoch: {epoch}, train_loss: {train_loss:.4f}, train_acc: {train_acc:.4f}, val_acc: {test_acc:.4f}, lr: {optimizer.param_groups[0]["lr"]:.6f},
-                epoch_time: {time.time()-start:.1f}, num_param:{num_param}')
+                 epoch_time: {time.time()-start:.1f}, num_param:{num_param}')

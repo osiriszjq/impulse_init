@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import numpy as np
 
+
+# initialization of convolusion kernel, C*1*K*K
 def SpatialConv2d_init(C, kernel_size, init='random'):
     weight = None
     if (init == 'random')|(init == 'softmax'):
@@ -55,6 +56,8 @@ def SpatialConv2d_init(C, kernel_size, init='random'):
     else:
         return weight
 
+
+# initialization of convolusion kernel in linear format, C*img_size*img_size, Out of Memory!!!
 def SpatialConv2d_Linear_init(C, H, W, init='perm'):
     weight = None
     weight = torch.zeros((C,H*W,H*W))
@@ -83,56 +86,14 @@ def SpatialConv2d_Linear_init(C, H, W, init='perm'):
             for j in range(0-min(0,m),H-max(0,m)):
                 weight[i,j*W:(j+1)*W,(j+m)*W:(j+m+1)*W] = tmp_weight
         weight = np.sqrt(1/3)*weight
-    elif init[:2] == 'qk':
-        a, b = init[2:].split('_')
-        att_rank = int(a)
-        ff = int(b)
-        weight = torch.zeros((C,H*W,H*W))
-        k = torch.randint(0,ff**2,(C,))
-        for i in range(C):
-            m = (k[i]//ff)-(ff//2)
-            n = (k[i]%ff)-(ff//2)
-            tmp_weight = torch.zeros((W,W))
-            for j in range(0-min(0,n),W-max(0,n)):
-                tmp_weight[j,j+n] = 1
-            for j in range(0-min(0,m),H-max(0,m)):
-                weight[i,j*W:(j+1)*W,(j+m)*W:(j+m+1)*W] = tmp_weight
-        weight = np.sqrt(1/3)*weight
-        class PermuteM(nn.Module):
-            def __init__(self, heads, sig_size, att_rank):
-                super().__init__()
-                const = 1/np.sqrt(att_rank)
-                weights_Q = const*torch.randn(heads, sig_size, att_rank)
-                weights_K = const*torch.randn(heads, att_rank, sig_size)
-                self.weights_K = nn.Parameter(weights_K)
-                self.weights_Q = nn.Parameter(weights_Q)
-            def forward(self):
-                M = torch.bmm(self.weights_Q,self.weights_K)
-                return torch.softmax(M,-1)
-        net = PermuteM(C,H*W,att_rank)
-        net.cuda()
-        weight = weight.cuda()
-        num_epoch = 10000
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(net.parameters(), lr=0.001)
-        for i in range(num_epoch):
-            optimizer.zero_grad()
-            outputs = net()
-            loss = criterion(outputs, weight)
-            loss.backward()
-            optimizer.step()
-        print(loss.data)
-    if init[:2] == 'qk':
-        return [(net.weights_Q/(net.weights_Q.norm(dim=2,keepdim=True))/np.sqrt(1/net.weights_Q.shape[2])).detach().cpu(),
-                (net.weights_K/(net.weights_K.norm(dim=1,keepdim=True))/np.sqrt(1/net.weights_K.shape[1])).detach().cpu()]
-    elif weight is None:
+    if weight is None:
         return -1
     else:
         return weight
 
 
 
-# my conv
+# my spatial conv fuction, group=#channels, heads controls the number of different conv filters
 class SpatialConv2d(nn.Module):
     def __init__(self, C, kernel_size, bias=True, init='random', heads = -1, trainable= True, input_weight=None):
         super(SpatialConv2d, self).__init__()
@@ -168,6 +129,8 @@ class SpatialConv2d(nn.Module):
         else:
             return torch.nn.functional.conv2d(x, self.weight[self.choice_idx], self.bias,padding='same',groups=self.C)
 
+
+# my soatial conv function in linear format, out of memory!!!
 class SpatialConv2d_LinearFormat(nn.Module):
     def __init__(self, C, H, W, bias=True, init='random', heads=-1, trainable= True, input_weight=None):
         super(SpatialConv2d_LinearFormat, self).__init__()
@@ -212,6 +175,7 @@ class SpatialConv2d_LinearFormat(nn.Module):
         return (x.reshape(-1,self.C,self.H*self.W)+ self.bias).reshape(-1,self.C,self.H,self.W)
 
 
+# normal convmixer functions
 
 class Residual(nn.Module):
     def __init__(self, fn):
