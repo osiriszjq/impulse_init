@@ -15,8 +15,8 @@ This is the official implementation of the paper "Convolutional Initialization f
     
     
 ## Google Colab
-[![Explore Siren in Colab](https://colab.research.google.com/assets/colab-badge.svg)]()<br>
-If you want to try out our new initialization for ViT, check this [Colab]() for a quick tour.
+[![Explore Siren in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/osiriszjq/impulse_init/blob/main/Impulse_Initialization.ipynb)<br>
+If you want to try out our new initialization for ViT, check this [Colab](https://github.com/osiriszjq/impulse_init/blob/main/Impulse_Initialization.ipynb) for a quick tour.
 
 
 ## Usage
