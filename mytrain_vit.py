@@ -26,7 +26,7 @@ parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
 parser.add_argument('--wd', default=0.0, type=float)
 parser.add_argument('--epochs', default=200, type=int)
 parser.add_argument('--batch-size', default=512, type=int)
-parser.add_argument('--workers', default=16, type=int)
+parser.add_argument('--num_workers', default=16, type=int)
 parser.add_argument('--data_aug', action='store_true')
 parser.add_argument('--noamp', action='store_true', help='disable mixed precision training. for older pytorch versions')
 
@@ -112,8 +112,8 @@ elif args.dataset == 'svhn':
 elif args.dataset == 'tiny_imagenet':
     trainset = torchvision.datasets.ImageFolder(root=args.data_path+'/tiny-imagenet-200/train', transform=train_transform)
     testset = torchvision.datasets.ImageFolder(root=args.data_path+'/tiny-imagenet-200/val/images', transform=test_transform)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers, pin_memory=True)
-testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
+testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
 
 
@@ -175,5 +175,4 @@ for epoch in range(args.epochs):
         wandb.log({'epoch': epoch, 'train_loss': train_loss, 'train_acc': train_acc, "val_acc": test_acc, "lr": optimizer.param_groups[0]["lr"],
         "epoch_time": time.time()-start, 'num_param':num_param})
     else:
-        print(f'epoch: {epoch}, train_loss: {train_loss:.4f}, train_acc: {train_acc:.4f}, val_acc: {test_acc:.4f}, lr: {optimizer.param_groups[0]["lr"]:.6f},
-                epoch_time: {time.time()-start:.1f}, num_param:{num_param}')
+        print(f'epoch: {epoch}, train_loss: {train_loss:.4f}, train_acc: {train_acc:.4f}, val_acc: {test_acc:.4f}, lr: {optimizer.param_groups[0]["lr"]:.6f}, epoch_time: {time.time()-start:.1f}, num_param:{num_param}')

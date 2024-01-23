@@ -155,5 +155,4 @@ for epoch in range(args.epochs):
         wandb.log({'epoch': epoch, 'train_loss': train_loss, 'train_acc': train_acc, "val_acc": test_acc, "lr": optimizer.param_groups[0]["lr"],
         "epoch_time": time.time()-start, 'num_param':num_param})
     else:
-        print(f'epoch: {epoch}, train_loss: {train_loss:.4f}, train_acc: {train_acc:.4f}, val_acc: {test_acc:.4f}, lr: {optimizer.param_groups[0]["lr"]:.6f},
-                 epoch_time: {time.time()-start:.1f}, num_param:{num_param}')
+        print(f'epoch: {epoch}, train_loss: {train_loss:.4f}, train_acc: {train_acc:.4f}, val_acc: {test_acc:.4f}, lr: {optimizer.param_groups[0]["lr"]:.6f}, epoch_time: {time.time()-start:.1f}, num_param:{num_param}')

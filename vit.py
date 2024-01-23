@@ -132,30 +132,7 @@ class Attention(nn.Module):
                 img_size = int(a)
                 att_rank = int(b)
                 Q = np.sqrt(1/img_size)*(2*torch.rand(heads,img_size,att_rank)-1)
-                K = np.sqrt(1/img_size)*(2*torch.rand(heads,att_rank,img_size)-1)
-
-            # elif init[:2] == 'mi':
-            #     a, b, c = init[2:].split('_')
-            #     img_size = int(a)
-            #     att_rank = int(b)
-            #     ff = int(c)
-            #     weight = torch.zeros((heads,img_size**2,img_size**2))
-            #     k = torch.randint(0,ff**2,(heads,))
-            #     for i in range(heads):
-            #         m = (k[i]//ff)-(ff//2)
-            #         n = (k[i]%ff)-(ff//2)
-            #         tmp_weight = torch.zeros((img_size,img_size))
-            #         for j in range(0-min(0,n),img_size-max(0,n)):
-            #             tmp_weight[j,j+n] = 1
-            #         for j in range(0-min(0,m),img_size-max(0,m)):
-            #             weight[i,j*img_size:(j+1)*img_size,(j+m)*img_size:(j+m+1)*img_size] = tmp_weight
-            #     W = 0.7*np.sqrt(1/img_size**2)*(2*torch.rand(heads,img_size**2,img_size**2)-1)+0.7*weight
-            #     U,s,V = torch.linalg.svd(W)
-            #     s_2 = torch.sqrt(s)
-            #     Q = torch.matmul(U[:,:,:att_rank], torch.diag_embed(s_2)[:,:att_rank,:att_rank])
-            #     K = torch.matmul(torch.diag_embed(s_2)[:,:att_rank,:att_rank], V[:,:att_rank,:])
-
-            
+                K = np.sqrt(1/img_size)*(2*torch.rand(heads,att_rank,img_size)-1) 
             elif init[:7] == 'mimetic':
                 a, b = init[7:].split('_')
                 img_size = int(a)
