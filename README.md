@@ -1,5 +1,5 @@
 # Convolutional Initialization for Data-Efficient Vision Transformers
-### [Project Page](https://osiriszjq.github.io/impulse_init) | [Paper]()
+### [Project Page](https://osiriszjq.github.io/impulse_init) | [Paper](https://arxiv.org/pdf/2401.12511.pdf)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
@@ -31,5 +31,11 @@ bash vit_pex.sh
 
 
 ## Citation
-```bibtex
+```
+@article{zheng2024convolutional,
+  title={Convolutional Initialization for Data-Efficient Vision Transformers},
+  author={Zheng, Jianqiao and Li, Xueqian and Lucey, Simon},
+  journal={arXiv preprint arXiv:2401.12511},
+  year={2024}
+}
 ```
