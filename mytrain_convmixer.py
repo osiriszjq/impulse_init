@@ -21,8 +21,8 @@ parser.add_argument("--data_path", type=str, default="./data")
 parser.add_argument('--nowandb', action='store_true', help='disable wandb')
 
 parser.add_argument('--opt', default="adam")
-parser.add_argument('--scheduler', default="adam")
-parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
+parser.add_argument('--scheduler', default="cos")
+parser.add_argument('--lr', default=1e-3, type=float, help='learning rate')
 parser.add_argument('--wd', default=0.0, type=float)
 parser.add_argument('--epochs', default=200, type=int)
 parser.add_argument('--batch-size', default=512, type=int)
@@ -65,7 +65,7 @@ dataset_std = (0.2471, 0.2435, 0.2616)
 if args.data_aug:
     train_transform = transforms.Compose([
         transforms.RandAugment(2, 14),
-        transforms.RandomCrop(32, padding=4),
+        transforms.RandomCrop(32, scale=(1.0,1.0),ratio=(1.0,1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(dataset_mean, dataset_std)

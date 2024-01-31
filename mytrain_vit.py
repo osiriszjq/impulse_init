@@ -21,7 +21,7 @@ parser.add_argument("--data_path", type=str, default="./data")
 parser.add_argument('--nowandb', action='store_true', help='disable wandb')
 
 parser.add_argument('--opt', default="adam")
-parser.add_argument('--scheduler', default="adam")
+parser.add_argument('--scheduler', default="cos")
 parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
 parser.add_argument('--wd', default=0.0, type=float)
 parser.add_argument('--epochs', default=200, type=int)

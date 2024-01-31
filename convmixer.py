@@ -5,29 +5,8 @@ import numpy as np
 
 # initialization of convolusion kernel, C*1*K*K
 def SpatialConv2d_init(C, kernel_size, init='random'):
-    weight = None
     if (init == 'random')|(init == 'softmax'):
         weight = 1/kernel_size*(2*torch.rand((C,1,kernel_size,kernel_size))-1)
-    elif init[:7] == 'lowrank':
-        k = int(init[7:])
-        Q = np.sqrt(1/kernel_size)*(2*torch.rand((C,k))-1)
-        K = np.sqrt(1/kernel_size)*(2*torch.rand((k,kernel_size**2))-1)
-        weight = torch.matmul(Q,K).reshape(C,1,kernel_size,kernel_size)
-    elif init[:3] == 'lrs':
-        k = int(init[3:])
-        Q = np.sqrt(1/kernel_size)*(2*torch.rand((C,k))-1)
-        K = np.sqrt(1/kernel_size)*(2*torch.rand((k,kernel_size**2))-1)
-        weight = torch.matmul(Q,K).softmax(-1).reshape(C,1,kernel_size,kernel_size)
-    elif init[:3] == 'lrp':
-        k = int(init[3:])
-        Q = np.sqrt(1/kernel_size)*(2*torch.rand((C,k))-1)
-        K = np.sqrt(1/kernel_size)*(2*torch.rand((k,kernel_size**2))-1)
-        weight = torch.matmul(Q,K).abs().reshape(C,1,kernel_size,kernel_size)
-    elif init[:3] == 'lrz':
-        k = int(init[3:])
-        Q = np.sqrt(1/kernel_size)*(2*torch.rand((C,k))-1).abs()
-        K = np.sqrt(1/kernel_size)*(2*torch.rand((k,kernel_size**2))-1).abs()
-        weight = torch.matmul(Q,K).reshape(C,1,kernel_size,kernel_size)
     elif init == 'impulse':
         k = torch.randint(0,kernel_size*kernel_size,(C,1))
         weight = torch.zeros((C,1,kernel_size*kernel_size))
@@ -51,15 +30,13 @@ def SpatialConv2d_init(C, kernel_size, init='random'):
                     for q in range(kernel_size):
                         weight[i,j,p,q] = (-0.5/float(init[3:])*((p-k[i,j,0])**2+(q-k[i,j,1])**2)).exp()
         weight = weight/((weight.flatten(1,3)**2).sum(1).mean()*3).sqrt()
-    if weight is None:
-        return -1
     else:
-        return weight
+        return -1
+    return weight
 
 
 # initialization of convolusion kernel in linear format, C*img_size*img_size, Out of Memory!!!
 def SpatialConv2d_Linear_init(C, H, W, init='perm'):
-    weight = None
     weight = torch.zeros((C,H*W,H*W))
     if init == 'perm':
         for i in range(C):
@@ -86,10 +63,9 @@ def SpatialConv2d_Linear_init(C, H, W, init='perm'):
             for j in range(0-min(0,m),H-max(0,m)):
                 weight[i,j*W:(j+1)*W,(j+m)*W:(j+m+1)*W] = tmp_weight
         weight = np.sqrt(1/3)*weight
-    if weight is None:
-        return -1
     else:
-        return weight
+        return -1
+    return weight
 
 
 

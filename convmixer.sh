@@ -5,8 +5,8 @@ for heads in '512'; do
 for init in 'random' 'softmax' 'box1' 'box25'; do
 
 # for i in 1 2 3 4 5; do
-python mytrain_convmixer.py --dataset ${dataset}  --data_path ${save_path} --init ${init} --heads ${heads} --lr ${lr} 
-python mytrain_convmixer.py --dataset ${dataset}  --data_path ${save_path} --init ${init} --heads ${heads} --lr ${lr} --fix_spatial
+python mytrain_convmixer.py --dataset ${dataset}  --data_path ${data_path} --init ${init} --heads ${heads} --lr ${lr} 
+python mytrain_convmixer.py --dataset ${dataset}  --data_path ${data_path} --init ${init} --heads ${heads} --lr ${lr} --fix_spatial
 # done
 
 done
