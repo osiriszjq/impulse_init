@@ -8,6 +8,11 @@
 [Simon Lucey](https://www.adelaide.edu.au/directory/simon.lucey)<br>
 The University of Adelaide
 
+---
+🚀 **New! Explore our updated NeurIPS'25 work [Structured Initialization for Vision Transformers](https://github.com/osiriszjq/structured_initialization) — Released in Dec 2025**
+
+---
+
 This is the official implementation of the paper "Convolutional Initialization for Data-Efficient Vision Transformers", including a modified version of [ConvMixer](https://arxiv.org/abs/2201.09792) and [Simple ViT](https://arxiv.org/abs/2205.01580) on CIFAR-10, CIFAR-100, SVHN and [Tiny ImageNet](http://vision.stanford.edu/teaching/cs231n/reports/2015/pdfs/yle_project.pdf). The code is based on [vision-transformers-cifar10](https://github.com/kentaroy47/vision-transformers-cifar10/tree/main)
 
 #### Illustration of different methods to extend 1D encoding
